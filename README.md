@@ -28,14 +28,14 @@
 ## POWER INFRASTRUCTURE
 
 - 1U PDU Horizontal Rackmount Power Strip (Qty: 1) - Rack central power hub (cluster only) - $60.99
-- Dedicated 5V/5A (25W) USB-C Power Supplies or 12V/24V Central PSU w/ Buck Converters (Qty: 6) - Dedicated 5V/5A per Orange Pi node - ~$90.00 to $120.00
+- Dedicated 5V/5A (25W) USB-C Power Supplies or a properly rated 12V/24V central PSU with buck converters (Qty: 6) - Intended for the six Orange Pi nodes; verify the exact Orange Pi 5 Max input specification before buying - ~$90.00 to $120.00
 - 19V 4.74A 90W DC Power Adapter w/ Barrel Jack (Qty: 1) - Dedicated power supply for Jetson Orin Nano - ~$20.00
 - 100W/5A USB-C to USB-C Braided Patch Cables 1.5ft (Qty: 15) - Clean USB-C power runs - ~$30.00 *(Note: Bambu 3D Printer must be powered via a separate, dedicated wall outlet/circuit to avoid tripping the PDU breaker during bed heat-up).*
 
 ## NETWORKING
 
 - 24-Port 2.5G Managed Switch w/ 220W+ PoE+ (Qty: 1) - Sufficient PoE headroom and manual power allocation per port - ~$340.00 to $380.00
-- GEARit Cat6 Patch Cables 1ft, 24-Pack (Qty: 1) - Network patch runs - $18.00 *(Note: Requires `PSU_MAX_CURRENT=5000` added to Raspberry Pi `/boot/firmware/cmdline.txt` to enable 5A power profiling over PoE+).*
+- GEARit Cat6 Patch Cables 1ft, 24-Pack (Qty: 1) - Network patch runs - $18.00 *(Power note: do not add `PSU_MAX_CURRENT=5000` to `cmdline.txt`. Raspberry Pi documents this as a bootloader configuration property, not a way to make a PoE HAT supply 5A. See the power-verification section below.)*
 
 ## STORAGE & EXPANSION
 
@@ -101,6 +101,31 @@
 | **Updated Grand Total Estimate** | **$8,618.93 – $9,132.93** |
 
 ---
+
+## Hardware Verification Notes — Read Before Buying
+
+### Raspberry Pi 5 power and Waveshare PoE M.2 HAT+ (B)
+
+The listed HAT appears to be the Waveshare **PoE M.2 HAT+ (B)**, not the similarly named original PoE M.2 HAT+. The manufacturer's product page lists Raspberry Pi 5 support, IEEE 802.3af/at PoE, NVMe drives in 2230/2242/2260/2280 sizes, and compatibility with the official Pi 5 Active Cooler. Its published output is **5V up to 4.5A** from the GPIO header and **12V up to 2A** from the 2-pin header, with a stated combined output limit of about 25W. This is not the same as guaranteeing 5V/5A to the Pi in every workload.
+
+**Power-setting correction:**
+- Do **not** put `PSU_MAX_CURRENT=5000` in `/boot/firmware/cmdline.txt`. Raspberry Pi documents `PSU_MAX_CURRENT` as a bootloader configuration property; it tells firmware to assume a supply current rating and skip USB-PD negotiation. It does not increase the physical output of a PoE HAT.
+- Waveshare's HAT wiki mentions `usb_max_current_enable=1` in `/boot/firmware/config.txt` if a power-limit warning appears. Do not force this setting automatically across all seven nodes. First follow the instructions for the exact HAT and OS, and verify that the actual supply path can safely support the selected setting.
+- The seven Raspberry Pi nodes are intended to use the seven PoE HATs. The six 5V/5A supplies listed above are for the six Orange Pi nodes, not the Raspberry Pis. Keep the power paths clearly separated in the final wiring diagram.
+- The switch model is not specified in this plan, so its PoE budget cannot yet be confirmed. Seven 802.3at ports can each request up to 30W at the switch side; a 220W aggregate budget leaves little headroom if all seven nodes approach their maximum draw. Check the switch's **per-port 802.3at support and total PoE budget**, account for conversion losses, and validate real node draw under CPU + NVMe load. If uncertain, choose a switch with more PoE headroom or use a separately engineered power plan.
+- The 100W rating on a USB-C cable is only a cable rating; it does not provide power without a suitable source.
+
+### NVMe and physical fit
+
+The listed Crucial P3 Plus and Fanxiang S501 drives are intended to be NVMe M.2 drives; verify each exact SKU before purchase. The PoE M.2 HAT+ (B) supports 2280 NVMe drives, but the Raspberry Pi's PCIe link and firmware determine actual speed, so do not expect the SSD's advertised maximum Gen4 speed on a Pi 5. The manufacturer's page says the (B) version is compatible with the official Pi 5 Active Cooler, but still prototype one assembled node in the planned rack drawer and check connector access, SSD clearance, airflow, and temperatures.
+
+### Items that cannot be fully verified from the current list
+
+- **PoE switch:** no manufacturer/model number is listed, so exact port standards, aggregate power budget, and management features remain unverified.
+- **Orange Pi 5 Max power supply:** confirm the official input voltage/current for the exact board revision and selected supply before buying.
+- **Orange Pi OS + Longhorn:** support depends on the exact Armbian image, kernel, architecture, and current Longhorn release. Prove NVMe detection, required kernel/filesystem features, iSCSI, and persistent-volume mounting on one node before committing to six.
+- **Jetson adapter:** confirm that the 19V adapter's barrel size, polarity, voltage, and current match the exact Yahboom kit documentation. Do not rely on voltage/current alone.
+- **Printer circuit:** use the printer's manufacturer-rated supply and a properly rated outlet/circuit. A separate outlet does not necessarily mean a separate electrical circuit; avoid overloading a circuit and ask a qualified adult/electrician if unsure.
 
 # Software Plan
 
@@ -210,25 +235,24 @@ roughly twice, and three replicas roughly three times, the logical
 volume size, before other overhead.
 
 This playbook is a starting template, not a drop-in configuration for
-every OS. It separates common Debian/Ubuntu-family preparation from
-Raspberry Pi-specific power settings. Validate package and service names
-on your chosen Ubuntu, Raspberry Pi OS, and Armbian releases before
-running it. The Jetson is intentionally excluded from the generic
-Longhorn setup unless you later decide to use it as a
-Kubernetes/Longhorn node.
+every OS. It applies common Debian/Ubuntu-family preparation to the two
+Kubernetes clusters and deliberately leaves all Raspberry Pi power
+settings untouched. Validate package and service names on your chosen
+Ubuntu, Raspberry Pi OS, and Armbian releases before running it. The
+Jetson is intentionally excluded from the generic Longhorn setup unless
+you later decide to use it as a Kubernetes/Longhorn node.
 
-Create `base-setup.yml` on your Framework laptop:
+Create `base-setup.yml` on your Framework laptop. This is a **starting template**: validate package/service names on each selected OS first, and run it against one test node before a full rollout. It deliberately does not change Raspberry Pi power settings.
 
-``` yaml
+```yaml
 ---
 - name: Common preparation for Debian/Ubuntu-family cluster nodes
   hosts: pi_cluster:orange_cluster
   become: true
   tasks:
-    - name: Update apt cache and upgrade packages
+    - name: Update apt cache
       ansible.builtin.apt:
         update_cache: true
-        upgrade: dist
         cache_valid_time: 3600
 
     - name: Install common tools and Longhorn prerequisites
@@ -242,39 +266,14 @@ Create `base-setup.yml` on your Framework laptop:
           - nvme-cli
         state: present
 
-    - name: Enable iSCSI daemon where this service exists
+    - name: Enable iSCSI daemon
       ansible.builtin.service:
         name: iscsid
         enabled: true
         state: started
-
-- name: Raspberry Pi power configuration (verify before enabling)
-  hosts: pi_cluster
-  become: true
-  tasks:
-    - name: Add USB high-current setting only when confirmed appropriate for this OS and power setup
-      ansible.builtin.lineinfile:
-        path: /boot/firmware/config.txt
-        line: "usb_max_current_enable=1"
-        state: present
-        create: false
-      notify: Reboot Pi nodes
-
-  handlers:
-    - name: Reboot Pi nodes
-      ansible.builtin.reboot:
-        msg: "Rebooting to apply the changed Raspberry Pi configuration"
-        reboot_timeout: 300
 ```
 
-**Power-setting caution:** The USB current-limit setting and the
-PSU-current declaration are different settings and are not
-interchangeable. Do not blindly add either one to all Pis. First
-document the actual supply/HAT configuration for each node and verify
-the appropriate setting for the selected firmware/OS. The playbook above
-deliberately flags the USB setting for confirmation rather than treating
-it as a universal fix. Test on one Pi and confirm that a reboot is
-actually required before applying it to all seven.
+**Do not add a power-setting task to this playbook yet.** First establish which nodes use the Waveshare PoE HAT and which firmware/OS is installed. If a manufacturer-documented setting is needed, apply it manually to one test Pi after confirming the power supply can support it, reboot only if required, and verify the result before automating it.
 
 To run this, you will also need your inventory file. Create hosts.ini in
 the same directory:
@@ -341,10 +340,9 @@ Bash
 
     mkdir -p ~/.kube
     k3sup install --ip 192.168.1.50 --user clusteradmin \
-      --k3s-channel stable \
-
---k3s-extra-args "--disable=servicelb"\
---local-path \~/.kube/pi-config.yaml
+      --k3s-channel stable \
+      --k3s-extra-args "--disable servicelb" \
+      --local-path "$HOME/.kube/pi-config.yaml"
 
 **3.Join the Pi Worker Nodes:**IPs:
 
@@ -354,8 +352,8 @@ all 8GB Pi nodes to the master.
 Bash
 
     for i in {51..56}; do
-      k3sup join --ip 192.168.1.$i --server-ip 192.168.1.50 \
-        --user clusteradmin --k3s-channel stable
+      k3sup join --ip 192.168.1.$i --server-ip 192.168.1.50 \
+        --user clusteradmin --k3s-channel stable
     done
 
 **4.Bootstrap the Orange Pi Cluster (Master):**
@@ -367,10 +365,9 @@ orange-config.yaml.
 Bash
 
     k3sup install --ip 192.168.1.60 --user clusteradmin \
-      --k3s-channel stable \
-
---k3s-extra-args "--disable=servicelb"\
---local-path \~/.kube/orange-config.yaml
+      --k3s-channel stable \
+      --k3s-extra-args "--disable servicelb" \
+      --local-path "$HOME/.kube/orange-config.yaml"
 
 **5.Join the Orange Pi Worker Nodes:**IPs: .61 to .65.
 
@@ -380,8 +377,8 @@ master node.
 Bash
 
     for i in {61..65}; do
-      k3sup join --ip 192.168.1.$i --server-ip 192.168.1.60 \
-        --user clusteradmin --k3s-channel stable
+      k3sup join --ip 192.168.1.$i --server-ip 192.168.1.60 \
+        --user clusteradmin --k3s-channel stable
     done
 
 ## Verifying Your Clusters
@@ -448,8 +445,8 @@ Bash
     export KUBECONFIG=~/.kube/pi-config.yaml
 
     helm install longhorn longhorn/longhorn \
-      --namespace longhorn-system \
-      --create-namespace
+      --namespace longhorn-system \
+      --create-namespace
 
 *Note: It will take a minute or two for all the Longhorn pods to spin
 up. You can watch the progress with kubectl get pods -n longhorn-system
@@ -466,8 +463,8 @@ Bash
     export KUBECONFIG=~/.kube/orange-config.yaml
 
     helm install longhorn longhorn/longhorn \
-      --namespace longhorn-system \
-      --create-namespace
+      --namespace longhorn-system \
+      --create-namespace
 
 **5.Access the UI and Adjust Storage Limits:**Critical Safety Setting.
 
@@ -516,8 +513,8 @@ Bash
     helm repo update
 
     helm install metallb metallb/metallb \
-      --namespace metallb-system \
-      --create-namespace
+      --namespace metallb-system \
+      --create-namespace
 
 **3.Create the Address Pool:**metallb-pool.yaml.
 
@@ -532,20 +529,20 @@ YAML
     apiVersion: metallb.io/v1beta1
     kind: IPAddressPool
     metadata:
-      name: primary-pool
-      namespace: metallb-system
+      name: primary-pool
+      namespace: metallb-system
     spec:
-      addresses:
-      - 192.168.1.200-192.168.1.220
+      addresses:
+      - 192.168.1.200-192.168.1.220
     ---
     apiVersion: metallb.io/v1beta1
     kind: L2Advertisement
     metadata:
-      name: primary-l2
-      namespace: metallb-system
+      name: primary-l2
+      namespace: metallb-system
     spec:
-      ipAddressPools:
-      - primary-pool
+      ipAddressPools:
+      - primary-pool
 
 **4.Apply the Configuration:**
 
@@ -612,13 +609,13 @@ Update it to look like this (adding the "default-runtime" line):
 JSON
 
     {
-        "runtimes": {
-            "nvidia": {
-                "path": "nvidia-container-runtime",
-                "runtimeArgs": []
-            }
-        },
-        "default-runtime": "nvidia"
+        "runtimes": {
+            "nvidia": {
+                "path": "nvidia-container-runtime",
+                "runtimeArgs": []
+            }
+        },
+        "default-runtime": "nvidia"
     }
 
 Restart Docker to apply the changes:
@@ -656,3 +653,28 @@ documentation for the exact test image and command.
 With the base environment complete, this node is ready to host heavy AI
 workloads as standalone Docker containers, keeping the heavy GPU
 processing off your K3s clusters.
+
+
+## Final Bring-Up Checklist
+
+Use this sequence when the hardware is eventually available. Do not skip directly to the full deployment.
+
+1. **One Raspberry Pi node:** boot the selected OS, check undervoltage/power warnings, confirm the PoE HAT and NVMe drive are detected, and run a sustained CPU + disk test while watching temperatures.
+2. **Power budget:** record the switch model, PoE standard per port, aggregate PoE budget, and measured draw. Confirm the seven-node plan has margin; do not infer it from the “220W+” label alone.
+3. **One Orange Pi node:** verify the exact board-supported OS image, power supply, NVMe detection, Ethernet stability, kernel, and storage prerequisites.
+4. **Ansible:** run syntax validation (`ansible-playbook --syntax-check -i hosts.ini base-setup.yml`) and then target a single test host. Check the inventory groups carefully; the generic playbook intentionally excludes the Jetson.
+5. **K3s:** install one server and one worker first. Confirm both are `Ready` before joining the remaining nodes. Check the installed k3sup help for `--k3s-extra-args` syntax and keep the ServiceLB/MetalLB plan consistent.
+6. **MetalLB:** reserve unused addresses outside DHCP and use non-overlapping pools for the two separate clusters. Deploy a test LoadBalancer service and confirm it can be reached from another machine on the LAN.
+7. **Longhorn:** install only after the required dependencies and supported filesystem are confirmed. Create a small test PVC, write/read data, reboot a node, and test a node/drive-loss scenario before putting important data on it.
+8. **Jetson:** match the container to the installed JetPack/L4T release and run a supported CUDA/PyTorch or inference test. `cat /etc/nv_tegra_release` alone is not a GPU test.
+9. **Rack prototype:** print one drawer first. Check cooler/HAT/SSD fit, cable bend radius, airflow, safe access to connectors, and sustained temperatures before printing the full rack.
+
+### Official references used for this review
+
+- Raspberry Pi documentation — power supply, PoE, and bootloader configuration: https://www.raspberrypi.com/documentation/computers/raspberry-pi.html and https://www.raspberrypi.com/documentation/computers/config_txt.html
+- Waveshare — PoE M.2 HAT+ (B) product specifications and wiki: https://www.waveshare.com/product/poe-m.2-hat-plus-b.htm and https://www.waveshare.com/wiki/PoE_M.2_HAT%2B_%28B%29
+- k3sup — command-line usage and `--k3s-extra-args`: https://github.com/alexellis/k3sup
+- Longhorn — installation requirements: https://longhorn.io/docs/1.13.0/deploy/install/
+- NVIDIA — Jetson Orin Nano CUDA and Docker setup: https://docs.nvidia.com/jetson/orin-nano-devkit/user-guide/setup_cuda.html and https://docs.nvidia.com/jetson/orin-nano-devkit/user-guide/latest/setup_docker.html
+
+The exact switch model, exact Orange Pi power supply, and physical thermal performance remain unverified because the plan does not provide enough detail or actual hardware to test them.

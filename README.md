@@ -25,6 +25,40 @@
 - Heat-Set Insert Installation Kit M2.5 / M3 (Qty: 1) - Threaded metal sockets for 3D prints - ~$20.00
 - Nicpro 58PCS Art Drawing Supplies Kit (Qty: 1) - Finishing/labeling - $25.00
 
+## CLUSTER ENCLOSURES & 3D-PRINTED MODIFICATIONS
+
+This section records the planned physical enclosure approach. The designs are starting points, not yet verified fits for every board revision or the full NVMe/cooling configuration. Prototype one node and one section before printing or purchasing parts for the complete clusters.
+
+### Cluster 1 — Raspberry Pi 5 swarm
+
+- **Base enclosure:** [C4Labs Zebra Bramble cluster case](https://www.amazon.com/dp/B07VNHDM5Y) for the six Raspberry Pi 5 8GB worker nodes.
+- **Master node:** Raspberry Pi 5 16GB, mounted in a custom 3D-printed socket/adapter designed to fit the chosen enclosure layout.
+- **Cooling:** The plan includes seven official Raspberry Pi 5 Active Coolers. Confirm that the Bramble case has enough vertical clearance and airflow for the coolers on all seven boards.
+- **NVMe:** The seven Pi nodes are planned to use Waveshare PCIe-to-M.2 HAT+ (B) boards with NVMe drives and PoE. Check the actual HAT/SSD stack height against the enclosure; the unmodified case may not provide enough room.
+- **Design checks:** Confirm board mounting-hole positions, USB/Ethernet/power connector access, cable bend radius, SSD access, and room to remove an individual node for maintenance. If needed, modify the case spacers or create a taller mounting layer rather than forcing boards or connectors into place.
+
+### Cluster 2 — Orange Pi 5 Max swarm
+
+- **Base design to modify:** [Orange Pi 5 SBC Cluster Cage — Printables model 1211068](https://www.printables.com/model/1211068-orangepi-5-sbc-cluster-cage).
+- **Cluster layout:** Six Orange Pi 5 Max 16GB boards, with one master and five workers.
+- **Modification goal:** Retain the original cage's general stacking/layout concept, but adapt board mounts and clearances for the Orange Pi 5 Max. Do not assume the original Orange Pi 5 version matches the Max board's dimensions, mounting holes, port placement, or cooling hardware.
+- **CAD workflow:** Prefer STEP or other editable CAD source if the creator provides it. If only STL files are available, mesh editing is possible but may make precise changes to mounting features harder. Keep an untouched copy of the original model and save the modified version as a separate project.
+- **Required checks before printing the full cage:**
+  1. Compare the Orange Pi 5 Max board outline and mounting-hole locations with the original model.
+  2. Check Ethernet, USB, HDMI, USB-C power, and other required connectors against the cage walls and neighboring boards.
+  3. Allow room for the selected heatsink/fan and airflow between stacked boards.
+  4. Check NVMe-drive and adapter placement, if used, so they do not collide with the next layer.
+  5. Add sensible cable paths, node labels (master / worker-1 through worker-5), and accessible fasteners.
+  6. If the cage will attach to a shelf or rack, add mounting points only after checking the printed frame's strength and dimensions.
+- **Prototype-first rule:** Print one mounting section or a single-board fit test first. Test with a real Orange Pi 5 Max, its cooling hardware, NVMe hardware (if fitted), and connected cables. Check stability, access, and temperatures before printing the complete six-board cage.
+
+### Fabrication and material notes
+
+- PETG is the planned filament. Print a small fit-test first and account for printer tolerances; holes and slots may need tuning for the actual printer and filament profile.
+- Use M2.5/M3 hardware only where it matches the board and model's intended fasteners. Avoid screws or standoffs that can touch components or stress the PCB.
+- Do not treat a printed enclosure as a heatsink. Preserve airflow and verify sustained-load temperatures after assembly.
+- **Budget status:** The enclosure links above are design choices, but their exact purchase prices, any required extra hardware, and the cost of failed prototypes have not been added to the grand total. Recheck the budget after the final enclosure design and bill of materials are known.
+
 ## POWER INFRASTRUCTURE
 
 - 1U PDU Horizontal Rackmount Power Strip (Qty: 1) - Rack central power hub (cluster only) - $60.99

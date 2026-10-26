@@ -1,3 +1,109 @@
+# Hardware Plan & Budget
+
+## COMPUTE NODES & AI
+
+- Orange Pi 5 Max 16GB LPDDR5 Dev Board (Qty: 6) - High-memory cluster nodes - $780.00 to $840.00
+- RasTech Raspberry Pi 5 8GB Kit (Qty: 6) - General cluster compute nodes - $690.00 to $750.00
+- RasTech Raspberry Pi 5 16GB Kit (Qty: 1) - Cluster Head Node / Master Controller - $150.00 to $170.00
+- Yahboom Jetson Orin Nano 8GB SUB Dev Kit (Qty: 1) - Dedicated AI/ML hardware node - $559.00 to $599.00
+- Bambu Lab P2S Combo 3D Printer & AMS 2 Pro (Qty: 1) - Custom enclosure & chassis fabrication - $949.00 to $1,199.00
+
+## WORKSTATION / MANAGEMENT CONSOLE
+
+- Framework Laptop 16 Custom Build (Qty: 1) - Primary control machine & portable workstation - $4,165.00
+  - AMD Ryzen AI 9 HX 370, Radeon RX 7700S GPU Module
+  - 32GB (2 x 16GB) DDR5-5600 RAM
+  - 2TB SANDISK 850X (2280) + 2TB SANDISK SN770M (2230)
+  - Black Bezel, Haptic Touchpad, US English Keyboard, 2x LED Matrix, RGB Macropad, Black & Orange Spacers
+  - Expansion Cards: USB-C (Silver & Orange), USB-A (Black), Ethernet, MicroSD, SD, Audio
+
+## CUSTOM FABRICATION, CASES & COOLING
+
+- Official Raspberry Pi 5 Active Coolers (Qty: 7) - Dedicated active cooling for standard Pi 5 SBCs - ~$35.00
+- PETG Filament 1.75mm 1kg Spools (Qty: 3) - High-heat filament for 3D printing custom 19" 3U/4U cluster rack drawers - ~$60.00
+- M2.5 & M3 Brass Standoff + Screw Kit 300+ PCS (Qty: 1) - PCB and board mounting - ~$15.00
+- Heat-Set Insert Installation Kit M2.5 / M3 (Qty: 1) - Threaded metal sockets for 3D prints - ~$20.00
+- Nicpro 58PCS Art Drawing Supplies Kit (Qty: 1) - Finishing/labeling - $25.00
+
+## POWER INFRASTRUCTURE
+
+- 1U PDU Horizontal Rackmount Power Strip (Qty: 1) - Rack central power hub (cluster only) - $60.99
+- Dedicated 5V/5A (25W) USB-C Power Supplies or 12V/24V Central PSU w/ Buck Converters (Qty: 6) - Dedicated 5V/5A per Orange Pi node - ~$90.00 to $120.00
+- 19V 4.74A 90W DC Power Adapter w/ Barrel Jack (Qty: 1) - Dedicated power supply for Jetson Orin Nano - ~$20.00
+- 100W/5A USB-C to USB-C Braided Patch Cables 1.5ft (Qty: 15) - Clean USB-C power runs - ~$30.00 *(Note: Bambu 3D Printer must be powered via a separate, dedicated wall outlet/circuit to avoid tripping the PDU breaker during bed heat-up).*
+
+## NETWORKING
+
+- 24-Port 2.5G Managed Switch w/ 220W+ PoE+ (Qty: 1) - Sufficient PoE headroom and manual power allocation per port - ~$340.00 to $380.00
+- GEARit Cat6 Patch Cables 1ft, 24-Pack (Qty: 1) - Network patch runs - $18.00 *(Note: Requires `PSU_MAX_CURRENT=5000` added to Raspberry Pi `/boot/firmware/cmdline.txt` to enable 5A power profiling over PoE+).*
+
+## STORAGE & EXPANSION
+
+- Crucial P3 Plus 500GB M.2 2280 NVMe SSD (Qty: 3) - Orange Pi nodes 1–3 - ~$135.00
+- Fanxiang S501 256GB NVMe SSD (Qty: 3) - Orange Pi nodes 4–6 - $66.00 to $80.00
+- Waveshare PCIe to M.2 HAT+ (B) 2280 Version w/ PoE (Qty: 7) - Full 2280 SSD & PoE power support for RPi 5 nodes - ~$125.00
+- Crucial P3 Plus 1TB M.2 NVMe SSD (Qty: 1) - RPi 5 16GB Head Node - ~$70.00
+- Fanxiang S501 128GB NVMe SSD (Qty: 6) - RPi 5 8GB Worker Nodes - $215.94
+
+### Itemized Hardware Breakdown
+
+**[1] Compute Nodes & AI Boards (15 Units Total)**
+
+- 6x Orange Pi 5 Max 16GB RAM LPDDR5
+- 6x Raspberry Pi 5 8GB Kits
+- 1x Raspberry Pi 5 16GB Kit
+- 1x Yahboom Jetson Orin Nano 8GB SUB Kit
+- 1x Bambu Lab P2S Combo 3D Printer
+
+**[2] Workstation / Management Console (1 Unit Total)**
+
+- 1x Framework Laptop 16 (Ryzen AI 9 HX 370, RX 7700S, 32GB RAM, 4TB Total NVMe)
+
+**[3] Custom Fabrication, Mounting & Cooling (13 Items / Kits)**
+
+- 7x Official Raspberry Pi 5 Active Coolers
+- 3x PETG Filament Spools (1kg each)
+- 1x M2.5 & M3 Brass Standoff + Screw Kit
+- 1x Heat-Set Insert Installation Kit
+- 1x Nicpro 58PCS Art Drawing Supplies Kit
+
+**[4] Power Infrastructure (23 Items / Bundles)**
+
+- 1x 1U Horizontal Rackmount PDU (Cluster Only)
+- 6x Dedicated 5V/5A (25W) USB-C Power Supplies or Central 12V/24V PSU w/ Buck Converters
+- 1x 19V 4.74A DC Power Adapter (Jetson)
+- 15x 100W USB-C to USB-C Cables (1.5ft)
+
+**[5] Networking (2 Bundles Total)**
+
+- 1x 24-Port 2.5G Managed Switch (220W+ PoE+ Budget)
+- 1x GEARit Cat6 Patch Cables (24-Pack)
+
+**[6] Storage & Pi Expansion (20 Total Units)**
+
+- 3x Crucial P3 Plus 500GB M.2 2280 NVMe SSDs
+- 3x Fanxiang S501 256GB NVMe SSDs
+- 7x Waveshare PCIe to M.2 HAT+ (B) 2280 Adapters w/ PoE
+- 1x Crucial P3 Plus 1TB M.2 2280 NVMe SSD
+- 6x Fanxiang S501 128GB NVMe SSDs
+
+### Updated Final Cost Summary
+
+| Category | Cost Range |
+| --- | ---: |
+| Compute Boards & 3D Printer Subtotal | $3,128.00 – $3,558.00 |
+| Custom Fabrication, Cases & Cooling | $155.00 |
+| Power Infrastructure Subtotal | $200.99 – $230.99 |
+| Networking Subtotal | $358.00 – $398.00 |
+| Storage & Pi Expansion Subtotal | $611.94 – $625.94 |
+| **Cluster & Infrastructure Subtotal** | **$1,325.93 – $1,409.93** |
+| Framework Laptop 16 Addition | $4,165.00 |
+| **Updated Grand Total Estimate** | **$8,618.93 – $9,132.93** |
+
+---
+
+# Software Plan
+
 **Software:**
 
 ### CLUSTER 1: THE PI SWARM (General Compute & Routing)
